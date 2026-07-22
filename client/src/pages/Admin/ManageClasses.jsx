@@ -3,8 +3,8 @@ import * as XLSX from 'xlsx';
 import api from '../../api/axios';
 import { toast } from 'react-toastify';
 
-const FIELD = 'px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 bg-white w-full';
-const LABEL = 'block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1';
+const FIELD = 'input-field';
+const LABEL = 'input-label';
 
 // ---------- Edit Student Modal (reusable from inside class view) ----------
 const EditStudentModal = ({ user, classes, onClose, onSaved }) => {
@@ -31,7 +31,7 @@ const EditStudentModal = ({ user, classes, onClose, onSaved }) => {
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
                 <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                     <div>
                         <h3 className="font-bold text-slate-800">Edit Student</h3>
@@ -212,6 +212,73 @@ const ExcelImportPanel = ({ classes, defaultClassId, onImported, onCancel }) => 
     );
 };
 
+// ---------- Add Student Panel ----------
+const AddStudentPanel = ({ classId, onAdded, onCancel }) => {
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [rollNumber, setRollNumber] = useState('');
+    const [saving, setSaving] = useState(false);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+        try {
+            await api.post('/api/admin/users', {
+                name,
+                email,
+                password,
+                role: 'student',
+                classId,
+                rollNumber
+            });
+            toast.success('Student added successfully');
+            onAdded();
+            onCancel();
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to add student');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="bg-slate-50 border border-slate-200 rounded-2xl p-5 mb-6 space-y-4 animate-fade-in-up">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h4 className="font-semibold text-slate-700">Add New Student</h4>
+                    <p className="text-xs text-slate-400 mt-0.5">Manually enroll a single student into this class</p>
+                </div>
+                <button type="button" onClick={onCancel} className="text-slate-400 hover:text-slate-600 text-sm">Cancel</button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label className={LABEL}>Full Name</label>
+                    <input className={FIELD} value={name} onChange={e => setName(e.target.value)} required placeholder="Alice Johnson" />
+                </div>
+                <div>
+                    <label className={LABEL}>Email Address</label>
+                    <input type="email" className={FIELD} value={email} onChange={e => setEmail(e.target.value)} required placeholder="alice@school.com" />
+                </div>
+                <div>
+                    <label className={LABEL}>Password</label>
+                    <input type="text" className={FIELD} value={password} onChange={e => setPassword(e.target.value)} required placeholder="Set password" />
+                </div>
+                <div>
+                    <label className={LABEL}>Roll Number</label>
+                    <input className={FIELD} value={rollNumber} onChange={e => setRollNumber(e.target.value)} placeholder="e.g. 101" />
+                </div>
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+                <button type="button" onClick={onCancel} className="btn-secondary" disabled={saving}>Cancel</button>
+                <button type="submit" className="btn-primary bg-violet-600 hover:bg-violet-700" disabled={saving}>
+                    {saving ? 'Adding...' : 'Add Student'}
+                </button>
+            </div>
+        </form>
+    );
+};
+
 // ---------- Class Detail View ----------
 const ClassDetail = ({ cls, allClasses, onBack, onRefresh }) => {
     const [students, setStudents] = useState([]);
@@ -219,6 +286,7 @@ const ClassDetail = ({ cls, allClasses, onBack, onRefresh }) => {
     const [editingStudent, setEditingStudent] = useState(null);
     const [deletingStudent, setDeletingStudent] = useState(null);
     const [showImport, setShowImport] = useState(false);
+    const [showAddStudent, setShowAddStudent] = useState(false);
 
     const fetchStudents = async () => {
         setLoading(true);
@@ -251,27 +319,58 @@ const ClassDetail = ({ cls, allClasses, onBack, onRefresh }) => {
     return (
         <div>
             {/* Back Header */}
-            <div className="flex flex-wrap items-center gap-3 mb-4">
-                <button
-                    onClick={onBack}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-lg transition font-medium"
-                >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                    All Classes
-                </button>
-                <div className="h-5 w-px bg-slate-200" />
-                <div className="flex-1">
-                    <h3 className="text-base font-bold text-slate-800">{cls.className}</h3>
-                    <p className="text-xs text-slate-400">{students.length} student{students.length !== 1 ? 's' : ''} enrolled</p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-5 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={onBack}
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition font-semibold"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
+                        All Classes
+                    </button>
+                    <div className="h-5 w-px bg-slate-200" />
+                    <div>
+                        <h3 className="text-base font-bold text-slate-800">{cls.className}</h3>
+                        <p className="text-xs text-slate-400">{students.length} student{students.length !== 1 ? 's' : ''} enrolled</p>
+                    </div>
                 </div>
-                <button
-                    onClick={() => setShowImport(v => !v)}
-                    className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition"
-                >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                    {showImport ? 'Cancel Import' : 'Import Students'}
-                </button>
+                <div className="flex flex-wrap gap-2">
+                    <button
+                        onClick={() => { setShowAddStudent(v => !v); setShowImport(false); }}
+                        className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 transition shadow-sm active:scale-[0.98]"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            {showAddStudent ? (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            ) : (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            )}
+                        </svg>
+                        {showAddStudent ? 'Cancel' : 'Add Student'}
+                    </button>
+                    <button
+                        onClick={() => { setShowImport(v => !v); setShowAddStudent(false); }}
+                        className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition shadow-sm active:scale-[0.98]"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            {showImport ? (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            ) : (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            )}
+                        </svg>
+                        {showImport ? 'Cancel Import' : 'Import Students'}
+                    </button>
+                </div>
             </div>
+
+            {showAddStudent && (
+                <AddStudentPanel
+                    classId={cls._id}
+                    onAdded={() => { fetchStudents(); onRefresh(); }}
+                    onCancel={() => setShowAddStudent(false)}
+                />
+            )}
 
             {showImport && (
                 <ExcelImportPanel
@@ -295,51 +394,63 @@ const ClassDetail = ({ cls, allClasses, onBack, onRefresh }) => {
                     <p className="text-xs text-slate-400 mt-1">Use the <strong>Import Students</strong> button above to add students to this class.</p>
                 </div>
             ) : (
-                <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-                    <table className="w-full text-sm text-left">
-                        <thead>
-                            <tr className="bg-slate-50 text-slate-500 text-xs font-semibold border-b border-slate-200">
-                                <th className="px-5 py-3 whitespace-nowrap">Roll #</th>
-                                <th className="px-5 py-3 whitespace-nowrap">Name</th>
-                                <th className="px-5 py-3 whitespace-nowrap">Email</th>
-                                <th className="px-5 py-3 text-right whitespace-nowrap">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {students.map(s => (
-                                <tr key={s._id} className="hover:bg-slate-50 transition-colors group/row">
-                                    <td className="px-5 py-3.5 font-mono text-slate-500 font-medium whitespace-nowrap">#{s.rollNumber || '—'}</td>
-                                    <td className="px-5 py-3.5 font-semibold text-slate-800 whitespace-nowrap">
-                                        <div className="flex items-center gap-2.5">
-                                            <div className="w-7 h-7 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-xs font-bold flex-shrink-0">
-                                                {s.name?.charAt(0).toUpperCase()}
-                                            </div>
-                                            {s.name}
-                                        </div>
-                                    </td>
-                                    <td className="px-5 py-3.5 text-slate-500 whitespace-nowrap">{s.email}</td>
-                                    <td className="px-5 py-3.5 text-right whitespace-nowrap">
-                                        <div className="flex justify-end gap-2">
-                                            <button
-                                                onClick={() => setEditingStudent(s)}
-                                                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition"
-                                                title="Edit Student"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                                            </button>
-                                            <button
-                                                onClick={() => setDeletingStudent(s)}
-                                                className="p-1.5 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
-                                                title="Remove Student"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                <div className="space-y-2">
+                    {/* Table Header */}
+                    <div className="grid grid-cols-12 px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                        <div className="col-span-1">Roll</div>
+                        <div className="col-span-5">Student</div>
+                        <div className="col-span-4">Email</div>
+                        <div className="col-span-2 text-right">Actions</div>
+                    </div>
+                    {students.map((s, i) => (
+                        <div
+                            key={s._id}
+                            className="grid grid-cols-12 items-center px-4 py-3.5 bg-white border border-slate-100 rounded-2xl hover:border-violet-200 hover:shadow-sm transition-all group"
+                        >
+                            {/* Roll Number */}
+                            <div className="col-span-1">
+                                <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold font-mono">
+                                    {s.rollNumber || i + 1}
+                                </span>
+                            </div>
+
+                            {/* Avatar + Name */}
+                            <div className="col-span-5 flex items-center gap-3 min-w-0">
+                                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-violet-700 text-white flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-sm">
+                                    {s.name?.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-slate-800 truncate">{s.name}</p>
+                                    <p className="text-xs text-slate-400">Student</p>
+                                </div>
+                            </div>
+
+                            {/* Email */}
+                            <div className="col-span-4 min-w-0">
+                                <p className="text-sm text-slate-500 truncate">{s.email}</p>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="col-span-2 flex justify-end gap-1.5">
+                                <button
+                                    onClick={() => setEditingStudent(s)}
+                                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-500 bg-slate-50 hover:bg-slate-100 hover:text-slate-700 rounded-lg transition"
+                                    title="Edit Student"
+                                >
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                    Edit
+                                </button>
+                                <button
+                                    onClick={() => setDeletingStudent(s)}
+                                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-400 bg-red-50 hover:bg-red-100 hover:text-red-600 rounded-lg transition"
+                                    title="Remove Student"
+                                >
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    Remove
+                                </button>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             )}
 
@@ -354,7 +465,7 @@ const ClassDetail = ({ cls, allClasses, onBack, onRefresh }) => {
 
             {deletingStudent && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto">
                         <div className="bg-red-500 px-6 py-4 flex items-center gap-3">
                             <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">
                                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -454,8 +565,8 @@ const ManageClasses = () => {
     return (
         <div>
             <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-800">Classes</h3>
-                <span className="text-sm text-gray-500">{classes.length} total</span>
+                <h3 className="text-base font-semibold text-slate-800">Classes</h3>
+                <span className="text-xs text-slate-400 font-semibold">{classes.length} total</span>
             </div>
 
             {/* Add class form */}
@@ -463,7 +574,7 @@ const ManageClasses = () => {
                 <input
                     type="text"
                     placeholder="e.g. Class 10-A"
-                    className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
+                    className="flex-1 input-field"
                     value={className}
                     onChange={e => setClassName(e.target.value)}
                     required
@@ -471,7 +582,7 @@ const ManageClasses = () => {
                 <button
                     type="submit"
                     disabled={adding}
-                    className="px-5 py-2.5 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition disabled:opacity-50 flex items-center gap-2"
+                    className="px-5 py-2.5 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 transition-all disabled:opacity-50 flex items-center gap-2 shadow-sm"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

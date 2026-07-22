@@ -3,8 +3,8 @@ import * as XLSX from 'xlsx';
 import api from '../../api/axios';
 import { toast } from 'react-toastify';
 
-const FIELD = 'px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 bg-white w-full';
-const LABEL = 'block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1';
+const FIELD = 'input-field';
+const LABEL = 'input-label';
 
 // ---------- Edit Modal ----------
 const EditModal = ({ user, classes, onClose, onSaved }) => {
@@ -32,7 +32,7 @@ const EditModal = ({ user, classes, onClose, onSaved }) => {
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
                 <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                     <div>
                         <h3 className="font-bold text-slate-800">Edit {user.role === 'student' ? 'Student' : 'Teacher'}</h3>
@@ -442,11 +442,11 @@ const ManageUsers = () => {
         <div>
             {/* Header */}
             <div className="flex items-center justify-between mb-5">
-                <h3 className="text-base font-bold text-slate-800">Manage Users</h3>
+                <h3 className="text-base font-semibold text-slate-800">Users</h3>
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => { setAddMode('teacher'); setShowAddForm(f => !f); }}
-                        className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-800 text-white text-sm font-medium rounded-lg hover:bg-slate-700 transition"
+                        className="px-4 py-2 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 transition-all flex items-center gap-1.5 shadow-sm"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showAddForm && addMode === 'teacher' ? "M6 18L18 6M6 6l12 12" : "M12 4v16m8-8H4"} /></svg>
                         {showAddForm && addMode === 'teacher' ? 'Cancel' : 'Add Teacher'}
@@ -488,7 +488,7 @@ const ManageUsers = () => {
             {/* Delete Confirmation Modal */}
             {deletingUser && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto">
                         <div className="bg-red-500 px-6 py-4">
                             <div className="flex items-center gap-3">
                                 <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">

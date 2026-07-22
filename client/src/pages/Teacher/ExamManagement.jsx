@@ -95,10 +95,10 @@ const ExamManagement = () => {
         setApprovingExam(exam);
         setSelectedStudents(exam.approvedUserIds?.map(s => s._id || s) || []);
         try {
-            const { data } = await api.get('/api/admin/classes');
+            const { data } = await api.get('/api/teacher/classes');
             const examClassId = exam.classId?._id || exam.classId;
             const cls = data.find(c => c._id === examClassId);
-            setClassStudents(cls?.studentIds || []);
+            setClassStudents(cls?.students || []);
         } catch { toast.error('Failed to load students'); }
     };
 
@@ -309,7 +309,7 @@ const ExamManagement = () => {
 
             {deleteTarget && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto">
                         {/* Red header bar */}
                         <div className="bg-red-500 px-6 py-4">
                             <div className="flex items-center gap-3">

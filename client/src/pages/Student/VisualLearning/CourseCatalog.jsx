@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import api from '../../../api/axios';
 import CourseViewer from './CourseViewer';
 import { toast } from 'react-toastify';
@@ -7,6 +8,31 @@ const CourseCatalog = () => {
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeCourse, setActiveCourse] = useState(null);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    const overlayRef = useRef(null);
+
+    // Sync isFullscreen state with browser fullscreen events
+    useEffect(() => {
+        const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+        document.addEventListener('fullscreenchange', onFsChange);
+        return () => document.removeEventListener('fullscreenchange', onFsChange);
+    }, []);
+
+    const toggleFullscreen = useCallback(() => {
+        if (!document.fullscreenElement) {
+            overlayRef.current?.requestFullscreen().catch(() => {});
+        } else {
+            document.exitFullscreen().catch(() => {});
+        }
+    }, []);
+
+    const exitCourse = useCallback(() => {
+        if (document.fullscreenElement) {
+            document.exitFullscreen().catch(() => {});
+        }
+        setActiveCourse(null);
+        refetch();
+    }, []);
 
     useEffect(() => {
         api.get('/api/student/courses')
@@ -28,36 +54,76 @@ const CourseCatalog = () => {
 
     if (activeCourse) {
         const courseWithProgress = courses.find(c => c._id === activeCourse._id) || activeCourse;
-        return (
-            <div className="fixed inset-0 bg-slate-50 z-[9999] overflow-auto">
-                {/* Fullscreen top bar */}
-                <div className="sticky top-0 bg-white border-b border-slate-200 shadow-sm z-10 px-4 md:px-8 py-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center">
+        // Use a portal so the overlay renders directly on document.body,
+        // escaping any ancestor CSS transforms (animate-fade-in-up) that
+        // would otherwise clip 'fixed inset-0' to a non-viewport containing block.
+        return createPortal(
+            <div
+                ref={overlayRef}
+                style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', flexDirection: 'column', background: '#F1F5F9' }}
+            >
+                {/* Top bar */}
+                <div style={{ flexShrink: 0 }} className="bg-white border-b border-slate-200 shadow-sm px-4 md:px-8 py-3 flex items-center justify-between">
+                    {/* Left: course icon + title */}
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-7 h-7 flex-shrink-0 rounded-lg bg-indigo-600 flex items-center justify-center">
                             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                             </svg>
                         </div>
-                        <span className="font-bold text-slate-700 text-sm truncate max-w-[200px] md:max-w-none">{courseWithProgress.title}</span>
+                        <span className="font-bold text-slate-700 text-sm truncate max-w-[160px] md:max-w-xs lg:max-w-none">
+                            {courseWithProgress.title}
+                        </span>
                     </div>
-                    <button
-                        onClick={() => { setActiveCourse(null); refetch(); }}
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-lg transition-colors"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        Exit Course
-                    </button>
+
+                    {/* Right: fullscreen + exit */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        {/* Fullscreen toggle */}
+                        <button
+                            onClick={toggleFullscreen}
+                            title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+                            className="flex items-center gap-2 px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm font-semibold rounded-lg transition-colors"
+                        >
+                            {isFullscreen ? (
+                                /* Compress / exit-fullscreen icon */
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                        d="M9 9V5m0 4H5m0 0 4-4M9 9 5 5M15 9h4m0 0V5m0 4-4-4m4 4 4-4M15 15h4m0 0v4m0-4-4 4m4-4 4 4M9 15H5m0 0v4m0-4 4 4m-4-4-4 4" />
+                                </svg>
+                            ) : (
+                                /* Expand / enter-fullscreen icon */
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                        d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4-5 5M4 16v4m0 0h4m-4 0 5-5m11 5-5-5m5 5v-4m0 4h-4" />
+                                </svg>
+                            )}
+                            <span className="hidden sm:inline">{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</span>
+                        </button>
+
+                        {/* Exit course */}
+                        <button
+                            onClick={exitCourse}
+                            className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-lg transition-colors"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            <span className="hidden sm:inline">Exit Course</span>
+                        </button>
+                    </div>
                 </div>
-                {/* Course content */}
-                <div className="p-4 md:p-8">
-                    <CourseViewer
-                        course={courseWithProgress}
-                        onBack={() => { setActiveCourse(null); refetch(); }}
-                    />
+
+                {/* Scrollable content area — fills remaining height */}
+                <div style={{ flex: 1, overflowY: 'auto' }}>
+                    <div className="max-w-5xl mx-auto px-4 md:px-8 py-6">
+                        <CourseViewer
+                            course={courseWithProgress}
+                            onBack={exitCourse}
+                        />
+                    </div>
                 </div>
-            </div>
+            </div>,
+            document.body
         );
     }
 

@@ -214,6 +214,8 @@ const StepContent = ({ step }) => {
 
 /* ──────────────────────── Main LessonViewer ──────────────────── */
 const LessonViewer = ({ lesson, course, onBack, onLessonComplete }) => {
+    console.log(    "course : ", course);
+    console.log("lesson : ", lesson);
     const [steps, setSteps] = useState([]);
     const [currentIdx, setCurrentIdx] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -224,21 +226,20 @@ const LessonViewer = ({ lesson, course, onBack, onLessonComplete }) => {
     const contentRef = useRef(null);
 
     useEffect(() => {
-        Promise.all([
-            api.get(`/api/teacher/courses/lessons/${lesson._id}/steps`),
-            api.get(`/api/student/courses/${course._id}/progress`),
-        ]).then(([stepsRes, progressRes]) => {
-            const stepsData = stepsRes.data;
-            setSteps(stepsData);
+        const stepsData = lesson.steps || [];
+        setSteps(stepsData);
+
+        api.get(`/api/student/courses/${course._id}/progress`)
+        .then((progressRes) => {
             const lessonProg = progressRes.data?.lessons?.find(l => l.lessonId === lesson._id);
             if (lessonProg) {
                 const doneIds = new Set(lessonProg.completedSteps);
                 setCompletedStepIds(doneIds);
                 setLessonDone(lessonProg.lessonCompleted && stepsData.length <= doneIds.size);
             }
-        }).catch(() => toast.error('Failed to load lesson'))
+        }).catch(() => toast.error('Failed to load lesson progress'))
             .finally(() => setLoading(false));
-    }, [lesson._id, course._id]);
+    }, [lesson, course._id]);
 
     const flipPage = useCallback(async (dir) => {
         if (animating) return;
@@ -282,14 +283,14 @@ const LessonViewer = ({ lesson, course, onBack, onLessonComplete }) => {
     const progress = steps.length ? ((currentIdx + 1) / steps.length) * 100 : 0;
 
     if (loading) return (
-        <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
+        <div className="fixed inset-0 z-[10000] bg-slate-50 flex flex-col items-center justify-center gap-4">
             <div className="w-8 h-8 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin" />
             <p className="text-sm text-slate-400">Loading lesson…</p>
         </div>
     );
 
     return (
-        <div className="flex flex-col h-full max-w-3xl mx-auto" style={{ minHeight: 'calc(100vh - 80px)' }}>
+        <div className="fixed inset-0 z-[10000] bg-slate-50 flex flex-col">
 
             {/* ── Top Strip: back + title + progress ── */}
             <div className="flex-none bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3">
@@ -332,8 +333,8 @@ const LessonViewer = ({ lesson, course, onBack, onLessonComplete }) => {
                     </div>
                 </div>
             ) : (
-                /* ── Notebook page area ── */
                 <div className="flex-1 flex flex-col overflow-hidden">
+                    <div className="flex-1 flex flex-col overflow-hidden max-w-3xl mx-auto w-full">
                     {/* Step dot pips */}
                     <div className="flex-none flex items-center justify-center gap-1.5 py-2 px-4">
                         {steps.map((s, i) => (
@@ -369,6 +370,7 @@ const LessonViewer = ({ lesson, course, onBack, onLessonComplete }) => {
                             </div>
                         </div>
                     </div>
+                </div>
 
                     {/* ── Fixed Navigation Bar ── */}
                     <div className="flex-none bg-white border-t border-slate-200 px-4 py-3 flex items-center gap-3">

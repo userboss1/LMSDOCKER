@@ -15,6 +15,7 @@ const QuestionBank = () => {
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState('');
     const [uploading, setUploading] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState(null);
 
     const fetchQuestions = async () => {
         try {
@@ -110,11 +111,16 @@ const QuestionBank = () => {
         }
     };
 
-    const handleDelete = async (id) => {
-        if (!window.confirm('Delete this question permanently?')) return;
+    const handleDelete = (q) => {
+        setDeleteTarget(q);
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
         try {
-            await api.delete(`/api/teacher/questions/${id}`);
+            await api.delete(`/api/teacher/questions/${deleteTarget._id}`);
             toast.success('Question deleted');
+            setDeleteTarget(null);
             fetchQuestions();
         } catch {
             toast.error('Failed to delete question');
@@ -302,13 +308,44 @@ const QuestionBank = () => {
                                     <button onClick={() => openEdit(q)} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Edit">
                                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                     </button>
-                                    <button onClick={() => handleDelete(q._id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete">
+                                    <button onClick={() => handleDelete(q)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete">
                                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                     </button>
                                 </div>
                             </div>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {deleteTarget && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto">
+                        <div className="bg-red-500 px-6 py-4">
+                            <h3 className="font-bold text-white">Delete Question</h3>
+                            <p className="text-red-100 text-xs mt-0.5">This action cannot be undone</p>
+                        </div>
+                        <div className="px-6 py-5 space-y-4">
+                            <p className="text-sm text-slate-600 line-clamp-3">
+                                Delete: <strong className="text-slate-800">"{deleteTarget.questionText}"</strong>?
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setDeleteTarget(null)}
+                                    className="flex-1 py-2.5 text-sm text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    className="flex-1 py-2.5 text-sm font-bold text-white bg-red-500 rounded-xl hover:bg-red-600 transition"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

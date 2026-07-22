@@ -101,7 +101,7 @@ const ModuleManager = ({ course, onBack }) => {
 
             {showForm && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
                         <div className="p-5 border-b border-gray-100">
                             <h3 className="font-bold text-slate-800">{editingMod ? 'Edit Module' : 'Add Module'}</h3>
                         </div>

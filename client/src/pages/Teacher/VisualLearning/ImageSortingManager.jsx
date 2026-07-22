@@ -218,7 +218,7 @@ const LabelingPaperForm = ({ existing, onSaved, onCancel }) => {
                             <label className="border-2 border-dashed border-slate-300 rounded-xl p-8 flex flex-col items-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition">
                                 <input type="file" accept="image/*" className="hidden" onChange={e=>e.target.files[0]&&uploadBg(e.target.files[0])}/>
                                 {uploading
-                                    ? <div className="w-8 h-8 border-3 border-purple-400 border-t-transparent rounded-full animate-spin mb-2"/>
+                                    ? <div className="w-8 h-8 border-[3px] border-purple-400 border-t-transparent rounded-full animate-spin mb-2"/>
                                     : <svg className="w-12 h-12 text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>}
                                 <p className="font-semibold text-slate-500 text-sm">Click to upload diagram / chart / anatomy image</p>
                             </label>
@@ -299,7 +299,7 @@ const CreateExamModal = ({ classes, onSaved, onCancel }) => {
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
                 <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                     <h3 className="font-bold text-slate-800 text-lg">Create Visual Exam</h3>
                     <button onClick={onCancel} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400">✕</button>
@@ -402,7 +402,7 @@ const ApprovePanel = ({ exam, onClose, onUpdated }) => {
                 </div>
                 <div className="p-5 max-h-72 overflow-y-auto space-y-2">
                     {loadingStudents
-                        ? <div className="flex justify-center py-6"><div className="w-6 h-6 border-3 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"/></div>
+                        ? <div className="flex justify-center py-6"><div className="w-6 h-6 border-[3px] border-indigo-200 border-t-indigo-600 rounded-full animate-spin"/></div>
                         : students.length === 0
                             ? <div className="text-center py-6">
                                 <p className="text-sm text-slate-400">No students found in this class</p>
@@ -758,7 +758,7 @@ const VisualExamManager = () => {
 
             {deleting&&(
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
+                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl max-h-[90vh] overflow-y-auto">
                         <div className="bg-red-500 px-6 py-4"><h3 className="font-bold text-white">Delete {deleting._type==='exam'?'Exam':'Paper'}</h3></div>
                         <div className="px-6 py-5 space-y-4">
                             <p className="text-sm text-slate-600">Permanently delete <strong>{deleting.title}</strong>?</p>

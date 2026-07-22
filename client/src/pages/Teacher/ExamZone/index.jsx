@@ -38,41 +38,27 @@ const ExamZone = () => {
 
     return (
         <div>
-            {/* Zone Header */}
-            <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-                <div>
-                    <h1 className="text-xl font-bold text-slate-800">Exam Zone</h1>
-                    <p className="text-sm text-slate-500">Manage live exams, approve students, and view results</p>
-                </div>
-            </div>
-
             {/* Sub-tab bar */}
-            <div className="flex gap-2 mb-6 border-b border-slate-100 pb-0 overflow-x-auto">
+            <div className="sub-tabs">
                 {subTabs.map(t => (
                     <button
                         key={t.id}
                         onClick={() => setActive(t.id)}
-                        className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-xl border-b-2 transition-all whitespace-nowrap ${active === t.id
-                                ? `border-slate-800 text-slate-800 bg-slate-50 shadow-sm`
-                                : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
-                            }`}
+                        className={`sub-tab ${active === t.id ? 'sub-tab-active' : 'sub-tab-inactive'}`}
                     >
-                        <span className={active === t.id ? 'text-slate-700' : 'text-slate-400'}>{t.icon}</span>
+                        <span className={active === t.id ? 'text-slate-700' : 'text-slate-400'}>
+                            {t.icon}
+                        </span>
                         {t.label}
                     </button>
                 ))}
             </div>
 
             {/* Content */}
-            <div className="mt-4">
-                {active === 'exams' && <ExamManagement />}
+            <div>
+                {active === 'exams'           && <ExamManagement />}
                 {active === 'question_papers' && <QuestionPapers />}
-                {active === 'results' && <Results />}
+                {active === 'results'         && <Results />}
             </div>
         </div>
     );

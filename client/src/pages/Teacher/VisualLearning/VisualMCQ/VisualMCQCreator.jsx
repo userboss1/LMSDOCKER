@@ -18,6 +18,7 @@ const subtypes = [
         desc: 'Students match pairs from two columns',
         icon: '⟷',
         color: 'from-violet-500 to-purple-500',
+        comingSoon: true,
     },
     {
         id: 'label',
@@ -32,6 +33,7 @@ const subtypes = [
         desc: 'Students identify elements in an image',
         icon: '🔍',
         color: 'from-amber-500 to-orange-500',
+        comingSoon: true,
     },
 ];
 
@@ -269,9 +271,19 @@ const VisualMCQCreator = ({ onCreated }) => {
                     {subtypes.map(st => (
                         <button
                             key={st.id}
-                            onClick={() => handleSubtypeSelect(st.id)}
-                            className="text-left p-5 rounded-2xl border-2 border-slate-100 bg-white hover:border-slate-300 hover:shadow-md transition-all group"
+                            onClick={() => !st.comingSoon && handleSubtypeSelect(st.id)}
+                            disabled={st.comingSoon}
+                            className={`text-left p-5 rounded-2xl border-2 transition-all group relative ${
+                                st.comingSoon
+                                    ? 'border-slate-100 bg-slate-50 opacity-60 cursor-not-allowed'
+                                    : 'border-slate-100 bg-white hover:border-slate-300 hover:shadow-md cursor-pointer'
+                            }`}
                         >
+                            {st.comingSoon && (
+                                <span className="absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 bg-slate-200 text-slate-500 rounded-full uppercase tracking-wide">
+                                    Coming Soon
+                                </span>
+                            )}
                             <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${st.color} flex items-center justify-center text-white text-2xl mb-3 shadow-sm`}>
                                 {st.icon}
                             </div>
