@@ -10,7 +10,7 @@ RUN npm install
 # Copy source and set environment for production
 COPY . .
 # For docker, we expect Nginx to route /api/ to the backend server container
-RUN echo "VITE_API_URL=/api" > .env.production
+RUN echo "VITE_API_URL=" > .env.production
 
 # Build the frontend
 RUN npm run build
