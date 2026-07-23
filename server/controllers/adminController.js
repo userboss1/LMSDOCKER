@@ -84,7 +84,7 @@ const addUser = async (req, res) => {
 // @access  SuperAdmin
 const getAllUsers = async (req, res) => {
     try {
-        const users = await User.find({}).populate('classId', 'className');
+        const users = await User.find({}).select('-password').populate('classId', 'className');
         res.json(users);
     } catch (error) {
         res.status(500).json({ message: error.message });

@@ -98,7 +98,7 @@ const updateQuestion = async (req, res) => {
 // @access  Teacher
 const getTeacherClasses = async (req, res) => {
     try {
-        const classes = await Class.find({})
+        const classes = await Class.find({ teacherIds: req.user._id })
             .populate('studentIds', 'name email rollNumber tempPassword')
             .lean();
         // Rename studentIds -> students for frontend

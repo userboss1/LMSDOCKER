@@ -44,6 +44,9 @@ const submissionSchema = mongoose.Schema({
     timestamps: true,
 });
 
+// Unique index: one submission per student per exam — prevents race condition duplicates
+submissionSchema.index({ examId: 1, studentId: 1 }, { unique: true });
+
 const Submission = mongoose.model('Submission', submissionSchema);
 
 module.exports = Submission;

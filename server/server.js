@@ -12,7 +12,11 @@ const app = express();
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(cors());
+const corsOptions = {
+    origin: process.env.ALLOWED_ORIGIN || '*',
+    credentials: true,
+};
+app.use(cors(corsOptions));
 
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
